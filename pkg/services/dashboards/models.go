@@ -488,6 +488,7 @@ type FindPersistedDashboardsQuery struct {
 	Page          int64
 	Permission    PermissionType
 	Sort          model.SortOption
+	PanelTitle    string
 
 	Filters []any
 }
