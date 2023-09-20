@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -37,7 +38,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 	var dashboardStore dashboards.Store
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBwithCfg(t)
+		sqlStore, cfg = db.InitTestDBwithCfg(t, db.InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagPanelTitleSearchInV1}})
 		quotaService := quotatest.New(false, nil)
 		var err error
 		dashboardStore, err = ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg), quotaService)
@@ -544,8 +545,7 @@ func TestIntegrationDashboardDataAccessGivenPluginWithImportedDashboards(t *test
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	sqlStore := db.InitTestDB(t)
-	cfg := setting.NewCfg()
+	sqlStore, cfg := db.InitTestDBwithCfg(t, db.InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagPanelTitleSearchInV1}})
 	cfg.IsFeatureToggleEnabled = func(key string) bool { return false }
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := ProvideDashboardStore(sqlStore, &setting.Cfg{}, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg), quotaService)
@@ -570,8 +570,7 @@ func TestIntegrationDashboard_SortingOptions(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	sqlStore := db.InitTestDB(t)
-	cfg := setting.NewCfg()
+	sqlStore, cfg := db.InitTestDBwithCfg(t, db.InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagPanelTitleSearchInV1}})
 	cfg.IsFeatureToggleEnabled = func(key string) bool { return false }
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := ProvideDashboardStore(sqlStore, &setting.Cfg{}, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg), quotaService)
@@ -623,8 +622,7 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	sqlStore := db.InitTestDB(t)
-	cfg := setting.NewCfg()
+	sqlStore, cfg := db.InitTestDBwithCfg(t, db.InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagPanelTitleSearchInV1}})
 	cfg.IsFeatureToggleEnabled = func(key string) bool { return false }
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg), quotaService)
@@ -668,8 +666,7 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 }
 
 func TestGetExistingDashboardByTitleAndFolder(t *testing.T) {
-	sqlStore := db.InitTestDB(t)
-	cfg := setting.NewCfg()
+	sqlStore, cfg := db.InitTestDBwithCfg(t, db.InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagPanelTitleSearchInV1}})
 	cfg.IsFeatureToggleEnabled = func(key string) bool { return false }
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg), quotaService)
@@ -707,8 +704,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	sqlStore := db.InitTestDB(t)
-	cfg := setting.NewCfg()
+	sqlStore, cfg := db.InitTestDBwithCfg(t, db.InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagPanelTitleSearchInV1}})
 	cfg.IsFeatureToggleEnabled = func(key string) bool { return false }
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg), quotaService)
