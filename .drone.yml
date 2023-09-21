@@ -2765,6 +2765,80 @@ volumes:
 ---
 clone:
   retries: 3
+depends_on:
+- main-test-backend
+- main-test-frontend
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: rgm-main-prerelease
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - export GRAFANA_DIR=$$(pwd)
+  - cd /src && ./scripts/drone_publish_main.sh
+  environment:
+    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
+      from_secret: dagger_token
+    ACCESS_KEY_ID:
+      from_secret: packages_access_key_id
+    CDN_DESTINATION:
+      from_secret: rgm_cdn_destination
+    DESTINATION:
+      from_secret: destination
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USERNAME:
+      from_secret: docker_username
+    DOWNLOADS_DESTINATION:
+      from_secret: rgm_downloads_destination
+    GCP_KEY_BASE64:
+      from_secret: gcp_key_base64
+    GITHUB_TOKEN:
+      from_secret: github_token
+    GO_VERSION: 1.20.8
+    GPG_PASSPHRASE:
+      from_secret: packages_gpg_passphrase
+    GPG_PRIVATE_KEY:
+      from_secret: packages_gpg_private_key
+    GPG_PUBLIC_KEY:
+      from_secret: packages_gpg_public_key
+    PACKAGES_DESTINATION: gs://grafana-packages-testing
+    SECRET_ACCESS_KEY:
+      from_secret: packages_secret_access_key
+    STORYBOOK_DESTINATION:
+      from_secret: rgm_storybook_destination
+  image: grafana/grafana-build:dev-dc11c89
+  name: rgm-build
+  pull: always
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+trigger:
+  branch: main
+  event:
+  - push
+  paths:
+    exclude:
+    - '*.md'
+    - docs/**
+    - packages/**/*.md
+    - latest.json
+  repo:
+  - grafana/grafana
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
 depends_on: []
 environment:
   EDITION: oss
@@ -2801,9 +2875,6 @@ trigger:
     - refs/tags/*-cloud*
     include:
     - refs/tags/v*
-  repo:
-    exclude:
-    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -2859,9 +2930,6 @@ trigger:
     - refs/tags/*-cloud*
     include:
     - refs/tags/v*
-  repo:
-    exclude:
-    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -2939,69 +3007,6 @@ trigger:
     - refs/tags/*-cloud*
     include:
     - refs/tags/v*
-  repo:
-    exclude:
-    - grafana/grafana
-type: docker
-volumes:
-- host:
-    path: /var/run/docker.sock
-  name: docker
----
-clone:
-  retries: 3
-depends_on:
-- main-test-backend
-- main-test-frontend
-image_pull_secrets:
-- dockerconfigjson
-kind: pipeline
-name: rgm-main-prerelease
-node:
-  type: no-parallel
-platform:
-  arch: amd64
-  os: linux
-services: []
-steps:
-- commands:
-  - export GRAFANA_DIR=$$(pwd)
-  - cd /src && ./scripts/drone_publish_main.sh
-  environment:
-    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
-      from_secret: dagger_token
-    DESTINATION:
-      from_secret: destination
-    GCP_KEY_BASE64:
-      from_secret: gcp_key_base64
-    GITHUB_TOKEN:
-      from_secret: github_token
-    GO_VERSION: 1.20.8
-    GPG_PASSPHRASE:
-      from_secret: packages_gpg_passphrase
-    GPG_PRIVATE_KEY:
-      from_secret: packages_gpg_private_key
-    GPG_PUBLIC_KEY:
-      from_secret: packages_gpg_public_key
-  failure: ignore
-  image: grafana/grafana-build:main
-  name: rgm-build
-  pull: always
-  volumes:
-  - name: docker
-    path: /var/run/docker.sock
-trigger:
-  branch: main
-  event:
-  - push
-  paths:
-    exclude:
-    - '*.md'
-    - docs/**
-    - packages/**/*.md
-    - latest.json
-  repo:
-  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3030,8 +3035,18 @@ steps:
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
+    ACCESS_KEY_ID:
+      from_secret: packages_access_key_id
+    CDN_DESTINATION:
+      from_secret: rgm_cdn_destination
     DESTINATION:
       from_secret: destination
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USERNAME:
+      from_secret: docker_username
+    DOWNLOADS_DESTINATION:
+      from_secret: rgm_downloads_destination
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
@@ -3043,7 +3058,12 @@ steps:
       from_secret: packages_gpg_private_key
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
-  image: grafana/grafana-build:main
+    PACKAGES_DESTINATION: gs://grafana-packages-testing
+    SECRET_ACCESS_KEY:
+      from_secret: packages_secret_access_key
+    STORYBOOK_DESTINATION:
+      from_secret: rgm_storybook_destination
+  image: grafana/grafana-build:dev-dc11c89
   name: rgm-build
   pull: always
   volumes:
@@ -3058,9 +3078,6 @@ trigger:
     - refs/tags/*-cloud*
     include:
     - refs/tags/v*
-  repo:
-    exclude:
-    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3127,63 +3144,10 @@ trigger:
     - refs/tags/*-cloud*
     include:
     - refs/tags/v*
-  repo:
-    exclude:
-    - grafana/grafana
 type: docker
 volumes:
 - host:
     path: //./pipe/docker_engine/
-  name: docker
----
-clone:
-  retries: 3
-depends_on:
-- release-test-backend
-- release-test-frontend
-image_pull_secrets:
-- dockerconfigjson
-kind: pipeline
-name: rgm-version-branch-prerelease
-node:
-  type: no-parallel
-platform:
-  arch: amd64
-  os: linux
-services: []
-steps:
-- commands:
-  - export GRAFANA_DIR=$$(pwd)
-  - cd /src && ./scripts/drone_publish_tag_grafana.sh
-  environment:
-    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
-      from_secret: dagger_token
-    DESTINATION:
-      from_secret: destination
-    GCP_KEY_BASE64:
-      from_secret: gcp_key_base64
-    GITHUB_TOKEN:
-      from_secret: github_token
-    GO_VERSION: 1.20.8
-    GPG_PASSPHRASE:
-      from_secret: packages_gpg_passphrase
-    GPG_PRIVATE_KEY:
-      from_secret: packages_gpg_private_key
-    GPG_PUBLIC_KEY:
-      from_secret: packages_gpg_public_key
-  image: grafana/grafana-build:main
-  name: rgm-build
-  pull: always
-  volumes:
-  - name: docker
-    path: /var/run/docker.sock
-trigger:
-  ref:
-  - refs/heads/v[0-9]*
-type: docker
-volumes:
-- host:
-    path: /var/run/docker.sock
   name: docker
 ---
 clone:
@@ -3225,9 +3189,71 @@ trigger:
     - refs/tags/*-cloud*
     include:
     - refs/tags/v*
-  repo:
-    exclude:
-    - grafana/grafana
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on:
+- release-test-backend
+- release-test-frontend
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: rgm-version-branch-prerelease
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - export GRAFANA_DIR=$$(pwd)
+  - cd /src && ./scripts/drone_publish_tag_grafana.sh
+  environment:
+    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
+      from_secret: dagger_token
+    ACCESS_KEY_ID:
+      from_secret: packages_access_key_id
+    CDN_DESTINATION:
+      from_secret: rgm_cdn_destination
+    DESTINATION:
+      from_secret: destination
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USERNAME:
+      from_secret: docker_username
+    DOWNLOADS_DESTINATION:
+      from_secret: rgm_downloads_destination
+    GCP_KEY_BASE64:
+      from_secret: gcp_key_base64
+    GITHUB_TOKEN:
+      from_secret: github_token
+    GO_VERSION: 1.20.8
+    GPG_PASSPHRASE:
+      from_secret: packages_gpg_passphrase
+    GPG_PRIVATE_KEY:
+      from_secret: packages_gpg_private_key
+    GPG_PUBLIC_KEY:
+      from_secret: packages_gpg_public_key
+    PACKAGES_DESTINATION: gs://grafana-packages-testing
+    SECRET_ACCESS_KEY:
+      from_secret: packages_secret_access_key
+    STORYBOOK_DESTINATION:
+      from_secret: rgm_storybook_destination
+  image: grafana/grafana-build:dev-dc11c89
+  name: rgm-build
+  pull: always
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+trigger:
+  ref:
+  - refs/heads/v[0-9]*
 type: docker
 volumes:
 - host:
@@ -3266,6 +3292,350 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
+environment:
+  EDITION: oss
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: nightly-test-frontend
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.18.3
+  name: identify-runner
+- commands:
+  - yarn install --immutable
+  depends_on: []
+  image: node:18.12.0-alpine
+  name: yarn-install
+- commands:
+  - apk add --update git bash
+  - yarn betterer ci
+  depends_on:
+  - yarn-install
+  image: node:18.12.0-alpine
+  name: betterer-frontend
+- commands:
+  - yarn run ci:test-frontend
+  depends_on:
+  - yarn-install
+  environment:
+    TEST_MAX_WORKERS: 50%
+  image: node:18.12.0-alpine
+  name: test-frontend
+trigger:
+  event:
+    include:
+    - promote
+  target:
+    include:
+    - nightly
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
+environment:
+  EDITION: oss
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: nightly-test-backend
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.18.3
+  name: identify-runner
+- commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - apk add --update make
+  - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
+  image: golang:1.20.8-alpine
+  name: verify-gen-cue
+- commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - apk add --update make
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on: []
+  image: golang:1.20.8-alpine
+  name: verify-gen-jsonnet
+- commands:
+  - apk add --update make
+  - make gen-go
+  depends_on:
+  - verify-gen-cue
+  image: golang:1.20.8-alpine
+  name: wire-install
+- commands:
+  - apk add --update build-base shared-mime-info shared-mime-info-lang
+  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
+  depends_on:
+  - wire-install
+  image: golang:1.20.8-alpine
+  name: test-backend
+- commands:
+  - apk add --update build-base
+  - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
+    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
+    | grep -o '\(.*\)/' | sort -u)
+  depends_on:
+  - wire-install
+  image: golang:1.20.8-alpine
+  name: test-backend-integration
+trigger:
+  event:
+    include:
+    - promote
+  target:
+    include:
+    - nightly
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on:
+- nightly-test-backend
+- nightly-test-frontend
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: rgm-nightly-build
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - export GRAFANA_DIR=$$(pwd)
+  - cd /src && ./scripts/drone_build_nightly_grafana.sh
+  environment:
+    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
+      from_secret: dagger_token
+    ACCESS_KEY_ID:
+      from_secret: packages_access_key_id
+    CDN_DESTINATION:
+      from_secret: rgm_cdn_destination
+    DESTINATION:
+      from_secret: destination
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USERNAME:
+      from_secret: docker_username
+    DOWNLOADS_DESTINATION:
+      from_secret: rgm_downloads_destination
+    GCP_KEY_BASE64:
+      from_secret: gcp_key_base64
+    GITHUB_TOKEN:
+      from_secret: github_token
+    GO_VERSION: 1.20.8
+    GPG_PASSPHRASE:
+      from_secret: packages_gpg_passphrase
+    GPG_PRIVATE_KEY:
+      from_secret: packages_gpg_private_key
+    GPG_PUBLIC_KEY:
+      from_secret: packages_gpg_public_key
+    PACKAGES_DESTINATION: gs://grafana-packages-testing
+    SECRET_ACCESS_KEY:
+      from_secret: packages_secret_access_key
+    STORYBOOK_DESTINATION:
+      from_secret: rgm_storybook_destination
+  image: grafana/grafana-build:dev-dc11c89
+  name: rgm-build
+  pull: always
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+- commands:
+  - mkdir -p $${DESTINATION}/$${DRONE_BUILD_EVENT}
+  - printenv GCP_KEY_BASE64 | base64 -d > /tmp/key.json
+  - gcloud auth activate-service-account --key-file=/tmp/key.json
+  - gcloud storage cp -r $${DRONE_WORKSPACE}/dist/* $${DESTINATION}/$${DRONE_BUILD_EVENT}
+  depends_on:
+  - rgm-build
+  environment:
+    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
+      from_secret: dagger_token
+    ACCESS_KEY_ID:
+      from_secret: packages_access_key_id
+    CDN_DESTINATION:
+      from_secret: rgm_cdn_destination
+    DESTINATION:
+      from_secret: destination
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USERNAME:
+      from_secret: docker_username
+    DOWNLOADS_DESTINATION:
+      from_secret: rgm_downloads_destination
+    GCP_KEY_BASE64:
+      from_secret: gcp_key_base64
+    GITHUB_TOKEN:
+      from_secret: github_token
+    GPG_PASSPHRASE:
+      from_secret: packages_gpg_passphrase
+    GPG_PRIVATE_KEY:
+      from_secret: packages_gpg_private_key
+    GPG_PUBLIC_KEY:
+      from_secret: packages_gpg_public_key
+    PACKAGES_DESTINATION: gs://grafana-packages-testing
+    SECRET_ACCESS_KEY:
+      from_secret: packages_secret_access_key
+    STORYBOOK_DESTINATION:
+      from_secret: rgm_storybook_destination
+  image: google/cloud-sdk:alpine
+  name: rgm-copy
+trigger:
+  event:
+    include:
+    - promote
+  target:
+    include:
+    - nightly
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on:
+- rgm-nightly-build
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: rgm-nightly-publish
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - mkdir -p $${DRONE_WORKSPACE}/dist
+  - printenv GCP_KEY_BASE64 | base64 -d > /tmp/key.json
+  - gcloud auth activate-service-account --key-file=/tmp/key.json
+  - gcloud storage cp -r $${DESTINATION}/$${DRONE_BUILD_EVENT}/*_$${DRONE_BUILD_NUMBER}_*
+    $${DRONE_WORKSPACE}/dist
+  environment:
+    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
+      from_secret: dagger_token
+    ACCESS_KEY_ID:
+      from_secret: packages_access_key_id
+    CDN_DESTINATION:
+      from_secret: rgm_cdn_destination
+    DESTINATION:
+      from_secret: destination
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USERNAME:
+      from_secret: docker_username
+    DOWNLOADS_DESTINATION:
+      from_secret: rgm_downloads_destination
+    GCP_KEY_BASE64:
+      from_secret: gcp_key_base64
+    GITHUB_TOKEN:
+      from_secret: github_token
+    GPG_PASSPHRASE:
+      from_secret: packages_gpg_passphrase
+    GPG_PRIVATE_KEY:
+      from_secret: packages_gpg_private_key
+    GPG_PUBLIC_KEY:
+      from_secret: packages_gpg_public_key
+    PACKAGES_DESTINATION: gs://grafana-packages-testing
+    SECRET_ACCESS_KEY:
+      from_secret: packages_secret_access_key
+    STORYBOOK_DESTINATION:
+      from_secret: rgm_storybook_destination
+  image: google/cloud-sdk:alpine
+  name: rgm-copy
+- commands:
+  - export GRAFANA_DIR=$$(pwd)
+  - cd /src && ./scripts/drone_publish_nightly_grafana.sh
+  depends_on:
+  - rgm-copy
+  environment:
+    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
+      from_secret: dagger_token
+    ACCESS_KEY_ID:
+      from_secret: packages_access_key_id
+    CDN_DESTINATION:
+      from_secret: rgm_cdn_destination
+    DESTINATION:
+      from_secret: destination
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USERNAME:
+      from_secret: docker_username
+    DOWNLOADS_DESTINATION:
+      from_secret: rgm_downloads_destination
+    GCP_KEY_BASE64:
+      from_secret: gcp_key_base64
+    GITHUB_TOKEN:
+      from_secret: github_token
+    GO_VERSION: 1.20.8
+    GPG_PASSPHRASE:
+      from_secret: packages_gpg_passphrase
+    GPG_PRIVATE_KEY:
+      from_secret: packages_gpg_private_key
+    GPG_PUBLIC_KEY:
+      from_secret: packages_gpg_public_key
+    PACKAGES_DESTINATION: gs://grafana-packages-testing
+    SECRET_ACCESS_KEY:
+      from_secret: packages_secret_access_key
+    STORYBOOK_DESTINATION:
+      from_secret: rgm_storybook_destination
+  image: grafana/grafana-build:dev-dc11c89
+  name: rgm-publish
+  pull: always
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+trigger:
+  event:
+    include:
+    - promote
+  target:
+    include:
+    - nightly
 type: docker
 volumes:
 - host:
@@ -4182,6 +4552,24 @@ kind: secret
 name: destination
 ---
 get:
+  name: storybook_destination
+  path: infra/data/ci/grafana-release-eng/rgm
+kind: secret
+name: rgm_storybook_destination
+---
+get:
+  name: cdn_destination
+  path: infra/data/ci/grafana-release-eng/rgm
+kind: secret
+name: rgm_cdn_destination
+---
+get:
+  name: downloads_destination
+  path: infra/data/ci/grafana-release-eng/rgm
+kind: secret
+name: rgm_downloads_destination
+---
+get:
   name: dagger_token
   path: infra/data/ci/grafana-release-eng/rgm
 kind: secret
@@ -4212,6 +4600,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 0b878d482338e27f3b8208271c974aa6c9cce0c4785eec59cf338464665b9ab5
+hmac: db83d241656e7a6663d2c1c931cc02809a28ec9239e375d7d599b37e7a42fc58
 
 ...
